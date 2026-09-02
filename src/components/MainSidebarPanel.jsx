@@ -106,6 +106,21 @@ const MainSidebarPanel = ({ activeFilter, onFilterChange, activeRole }) => {
     }));
   };
 
+  // Sum of the counts of the views shown under an inbox (its home-nav
+  // favourites) — displayed beside the inbox name while collapsed.
+  const inboxSum = (inboxName) => {
+    const data = viewsByInbox[inboxName];
+    if (!data) return 0;
+    const sidebarOrder = data.sidebarOrder?.[activeRole] || data.favouriteIds?.[activeRole] || [];
+    const viewsById = {};
+    data.views.forEach((v) => { viewsById[v.id] = v; });
+    return sidebarOrder
+      .map((id) => viewsById[id])
+      .filter(Boolean)
+      .slice(0, MAX_FAVOURITES)
+      .reduce((sum, v) => sum + (v.count || 0), 0);
+  };
+
   const renderNestedItems = (inboxName) => {
     const { views, sidebarOrder: sidebarOrderByRole, favouriteIds: favouriteIdsByRole, teamFavouriteIds } = viewsByInbox[inboxName];
     const sidebarOrder = sidebarOrderByRole[activeRole] || favouriteIdsByRole[activeRole] || [];
@@ -207,11 +222,14 @@ const MainSidebarPanel = ({ activeFilter, onFilterChange, activeRole }) => {
               <MailIcon />
               <span>Support</span>
             </div>
-            <img 
-              src={sChevronDown} 
-              alt="" 
-              className={`chevron-icon ${expandedInboxes.support ? 'up' : ''}`} 
-            />
+            <div className="accordion-meta">
+              <span className="inbox-sum">{inboxSum('Support')}</span>
+              <img
+                src={sChevronDown}
+                alt=""
+                className={`chevron-icon ${expandedInboxes.support ? 'up' : ''}`}
+              />
+            </div>
           </div>
 
           <NestedGroup expanded={expandedInboxes.support}>
@@ -226,11 +244,14 @@ const MainSidebarPanel = ({ activeFilter, onFilterChange, activeRole }) => {
               <MailIcon />
               <span>Finance</span>
             </div>
-            <img 
-              src={sChevronDown} 
-              alt="" 
-              className={`chevron-icon ${expandedInboxes.finance ? 'up' : ''}`} 
-            />
+            <div className="accordion-meta">
+              <span className="inbox-sum">{inboxSum('Finance')}</span>
+              <img
+                src={sChevronDown}
+                alt=""
+                className={`chevron-icon ${expandedInboxes.finance ? 'up' : ''}`}
+              />
+            </div>
           </div>
 
           <NestedGroup expanded={expandedInboxes.finance}>
@@ -245,11 +266,14 @@ const MainSidebarPanel = ({ activeFilter, onFilterChange, activeRole }) => {
               <MailIcon />
               <span>Shipping</span>
             </div>
-            <img 
-              src={sChevronDown} 
-              alt="" 
-              className={`chevron-icon ${expandedInboxes.shipping ? 'up' : ''}`} 
-            />
+            <div className="accordion-meta">
+              <span className="inbox-sum">{inboxSum('Shipping')}</span>
+              <img
+                src={sChevronDown}
+                alt=""
+                className={`chevron-icon ${expandedInboxes.shipping ? 'up' : ''}`}
+              />
+            </div>
           </div>
 
           <NestedGroup expanded={expandedInboxes.shipping}>
@@ -264,11 +288,14 @@ const MainSidebarPanel = ({ activeFilter, onFilterChange, activeRole }) => {
               <MailIcon />
               <span>Refund</span>
             </div>
-            <img 
-              src={sChevronDown} 
-              alt="" 
-              className={`chevron-icon ${expandedInboxes.refund ? 'up' : ''}`} 
-            />
+            <div className="accordion-meta">
+              <span className="inbox-sum">{inboxSum('Refund')}</span>
+              <img
+                src={sChevronDown}
+                alt=""
+                className={`chevron-icon ${expandedInboxes.refund ? 'up' : ''}`}
+              />
+            </div>
           </div>
 
           <NestedGroup expanded={expandedInboxes.refund}>
@@ -283,11 +310,14 @@ const MainSidebarPanel = ({ activeFilter, onFilterChange, activeRole }) => {
               <MailIcon />
               <span>IT Support</span>
             </div>
-            <img 
-              src={sChevronDown} 
-              alt="" 
-              className={`chevron-icon ${expandedInboxes.itSupport ? 'up' : ''}`} 
-            />
+            <div className="accordion-meta">
+              <span className="inbox-sum">{inboxSum('IT Support')}</span>
+              <img
+                src={sChevronDown}
+                alt=""
+                className={`chevron-icon ${expandedInboxes.itSupport ? 'up' : ''}`}
+              />
+            </div>
           </div>
 
           <NestedGroup expanded={expandedInboxes.itSupport}>

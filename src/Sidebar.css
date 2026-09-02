@@ -305,16 +305,40 @@
   justify-content: center;
 }
 
+.accordion-meta {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  min-width: 16px;
+}
+
+/* Inbox count states:
+   1. collapsed, default  -> show the sum
+   2. collapsed, hover    -> replace sum with chevron
+   3. expanded, default   -> show nothing
+   4. expanded, hover     -> show the up chevron */
+.inbox-sum {
+  font-size: 14px;
+  color: var(--slateTextTitle);
+  text-align: right;
+}
+
+/* Hide the sum on hover (chevron takes over) and whenever expanded. */
+.nav-item.accordion-trigger:hover .inbox-sum,
+.nav-item.accordion-trigger.expanded .inbox-sum {
+  display: none;
+}
+
 .nav-item.accordion-trigger .chevron-icon {
   width: 14px;
   height: 14px;
-  opacity: 0;
-  transition: transform 0.2s ease, opacity 0.15s ease;
+  display: none; /* only appears on hover */
+  transition: transform 0.2s ease;
   transform: rotate(0deg); /* Point right when collapsed */
 }
 
 .nav-item.accordion-trigger:hover .chevron-icon {
-  opacity: 1;
+  display: block;
 }
 
 .nav-item.accordion-trigger.expanded .chevron-icon,
