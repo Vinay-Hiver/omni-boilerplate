@@ -1,20 +1,78 @@
 import React from 'react';
+import AllViewsPanel from './AllViewsPanel';
+import { ViewTypeIcon, TeamFavRowIcon } from './viewIcons';
+import { INITIAL_VIEWS_BY_INBOX, MAX_FAVOURITES } from '../data/dummyViews';
 
 // Icons
 import allMailIcon from '../assets/icons/all-mail.svg';
-import allViewsIcon from '../assets/icons/all-views.svg';
 import assignedToMeIcon from '../assets/icons/assigned-to-me.svg';
 import draftIcon from '../assets/icons/draft.svg';
-import inboxIcon from '../assets/icons/inbox-icon.svg';
-import mineIcon from '../assets/icons/mine.svg';
 import newConversationIcon from '../assets/icons/new-conversation.svg';
 import sentIcon from '../assets/icons/sent.svg';
 import tagsIcon from '../assets/icons/tags.svg';
-import unassignedIcon from '../assets/icons/unassigned.svg';
 
 import sChevronDown from '../assets/icons/Read/side-bar-chevron.svg';
 
-const MainSidebarPanel = ({ activeFilter, onFilterChange }) => {
+// Untitled UI "mail-01" glyph, used for every Shared Inbox header.
+const MailIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="item-icon">
+    <path d="M2 6L8.913 10.755C10.155 11.606 10.776 12.031 11.449 12.196C12.044 12.343 12.665 12.343 13.26 12.196C13.933 12.031 14.554 11.606 15.796 10.755L22 6M6.8 20H17.2C18.8802 20 19.7202 20 20.362 19.673C20.9265 19.3854 21.3854 18.9265 21.673 18.362C22 17.7202 22 16.8802 22 15.2V8.8C22 7.11984 22 6.27976 21.673 5.63803C21.3854 5.07354 20.9265 4.6146 20.362 4.32698C19.7202 4 18.8802 4 17.2 4H6.8C5.11984 4 4.27976 4 3.63803 4.32698C3.07354 4.6146 2.6146 5.07354 2.32698 5.63803C2 6.27976 2 7.11984 2 8.8V15.2C2 16.8802 2 17.7202 2.32698 18.362C2.6146 18.9265 3.07354 19.3854 3.63803 19.673C4.27976 20 5.11984 20 6.8 20Z"></path>
+  </svg>
+);
+
+// Same "layers" glyph used for custom Views in the All Views panel
+const LayersIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="item-icon">
+    <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+    <polyline points="2 17 12 22 22 17"></polyline>
+    <polyline points="2 12 12 17 22 12"></polyline>
+  </svg>
+);
+
+// Animates the nested list open/closed by measuring its actual pixel height
+// and transitioning `height` directly — smoother than the `grid-template-
+// rows: 0fr/1fr` trick, which can settle with a small sub-pixel jump once
+// the transition ends and the row's auto-sized height gets its final layout.
+const NestedGroup = ({ expanded, children }) => {
+  const contentRef = React.useRef(null);
+  const [height, setHeight] = React.useState(expanded ? 'auto' : 0);
+  const isFirstRender = React.useRef(true);
+
+  React.useLayoutEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+    const el = contentRef.current;
+    if (!el) return;
+
+    if (expanded) {
+      const target = el.scrollHeight;
+      setHeight(target);
+      const timeout = setTimeout(() => setHeight('auto'), 250);
+      return () => clearTimeout(timeout);
+    }
+
+    setHeight(el.scrollHeight);
+    requestAnimationFrame(() => setHeight(0));
+  }, [expanded]);
+
+  return (
+    <div
+      ref={contentRef}
+      className="nav-group-nested-wrapper"
+      style={{
+        height: typeof height === 'number' ? `${height}px` : height,
+        overflow: 'hidden',
+        transition: 'height 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+      }}
+    >
+      {children}
+    </div>
+  );
+};
+
+const MainSidebarPanel = ({ activeFilter, onFilterChange, activeRole }) => {
   const [expandedInboxes, setExpandedInboxes] = React.useState({
     support: true,
     finance: false,
@@ -23,6 +81,24 @@ const MainSidebarPanel = ({ activeFilter, onFilterChange }) => {
     itSupport: false
   });
 
+  const [allViewsInbox, setAllViewsInbox] = React.useState(null);
+
+  // Switching Admin/Agent always drops back to the home nav — e.g. an admin
+  // pinning Team Favourites from within All Views, then flipping to Agent to
+  // see how it looks, should land on the sidebar's home screen first.
+  const isFirstRoleRender = React.useRef(true);
+  React.useEffect(() => {
+    if (isFirstRoleRender.current) {
+      isFirstRoleRender.current = false;
+      return;
+    }
+    setAllViewsInbox(null);
+  }, [activeRole]);
+
+  // Views (and each inbox's favourited View ids, in display order) live here
+  // so they persist across opening/closing All Views and drive the home nav.
+  const [viewsByInbox, setViewsByInbox] = React.useState(INITIAL_VIEWS_BY_INBOX);
+
   const toggleInbox = (inbox) => {
     setExpandedInboxes(prev => ({
       ...prev,
@@ -30,43 +106,53 @@ const MainSidebarPanel = ({ activeFilter, onFilterChange }) => {
     }));
   };
 
+  // Sum of the counts of the views shown under an inbox (its home-nav
+  // favourites) — displayed beside the inbox name while collapsed.
+  const inboxSum = (inboxName) => {
+    const data = viewsByInbox[inboxName];
+    if (!data) return 0;
+    const sidebarOrder = data.sidebarOrder?.[activeRole] || data.favouriteIds?.[activeRole] || [];
+    const viewsById = {};
+    data.views.forEach((v) => { viewsById[v.id] = v; });
+    return sidebarOrder
+      .map((id) => viewsById[id])
+      .filter(Boolean)
+      .slice(0, MAX_FAVOURITES)
+      .reduce((sum, v) => sum + (v.count || 0), 0);
+  };
+
   const renderNestedItems = (inboxName) => {
-    const counts = {
-      'Support-Mine': 2,
-      'Support-Unassigned': 4,
-      'Finance-Mine': 5,
-      'Finance-Unassigned': 3,
-      'Shipping-Mine': 3,
-      'Shipping-Unassigned': 2,
-      'Refund-Mine': 2,
-      'Refund-Unassigned': 3,
-      'IT Support-Mine': 3,
-      'IT Support-Unassigned': 2
-    };
+    const { views, sidebarOrder: sidebarOrderByRole, favouriteIds: favouriteIdsByRole, teamFavouriteIds } = viewsByInbox[inboxName];
+    const sidebarOrder = sidebarOrderByRole[activeRole] || favouriteIdsByRole[activeRole] || [];
+    const viewsById = {};
+    views.forEach((v) => { viewsById[v.id] = v; });
+
+    // What shows in the sidebar isn't "your favourites" anymore — it's the
+    // first 5 entries of the merged, drag-reorderable order (personal
+    // favourites and Team Favourites interleaved, as arranged in All
+    // Views). An Agent can't remove a Team Favourite, so with zero personal
+    // favourites the sidebar simply shows the top 5 Team Favourites.
+    const sidebarViews = sidebarOrder.map((id) => viewsById[id]).filter(Boolean).slice(0, MAX_FAVOURITES);
 
     return (
       <div className="nav-group-nested">
-        <div 
-          className={`nav-item ${activeFilter.inbox === inboxName && activeFilter.type === 'Mine' ? 'active' : ''}`}
-          onClick={() => onFilterChange({ inbox: inboxName, type: 'Mine' })}
-        >
-          <div className="nav-content">
-            <img src={mineIcon} alt="" width="16" height="16" className="item-icon" />
-            <span>Mine</span>
+        {sidebarViews.map((view) => (
+          <div
+            key={view.id}
+            className={`nav-item ${activeFilter.inbox === inboxName && activeFilter.type === view.name ? 'active' : ''}`}
+            onClick={() => onFilterChange({ inbox: inboxName, type: view.name })}
+          >
+            <div className="nav-content">
+              <span className="item-icon">
+                {teamFavouriteIds.includes(view.id) ? <TeamFavRowIcon /> : <ViewTypeIcon icon={view.icon} />}
+              </span>
+              <span>{view.name}</span>
+            </div>
+            <div className="nav-item-meta">
+              <span className="count">{view.count}</span>
+            </div>
           </div>
-          <span className="count">{counts[`${inboxName}-Mine`]}</span>
-        </div>
-        
-        <div 
-          className={`nav-item ${activeFilter.inbox === inboxName && activeFilter.type === 'Unassigned' ? 'active' : ''}`}
-          onClick={() => onFilterChange({ inbox: inboxName, type: 'Unassigned' })}
-        >
-          <div className="nav-content">
-            <img src={unassignedIcon} alt="" width="16" height="16" className="item-icon" />
-            <span>Unassigned</span>
-          </div>
-          <span className="count">{counts[`${inboxName}-Unassigned`]}</span>
-        </div>
+        ))}
 
       <div className="nav-item">
         <div className="nav-content">
@@ -75,15 +161,36 @@ const MainSidebarPanel = ({ activeFilter, onFilterChange }) => {
         </div>
       </div>
 
-      <div className="nav-item">
+      <div
+        className="nav-item"
+        onClick={() => setAllViewsInbox(inboxName)}
+      >
         <div className="nav-content">
-          <img src={allViewsIcon} alt="" width="16" height="16" className="item-icon" />
+          <LayersIcon />
           <span>All Views</span>
         </div>
       </div>
     </div>
   );
 };
+
+  if (allViewsInbox) {
+    return (
+      <div className="side-nav-expanded">
+        <AllViewsPanel
+          inboxName={allViewsInbox}
+          onBack={() => setAllViewsInbox(null)}
+          activeFilter={activeFilter}
+          onFilterChange={onFilterChange}
+          viewsData={viewsByInbox[allViewsInbox]}
+          onChange={(updated) =>
+            setViewsByInbox((prev) => ({ ...prev, [allViewsInbox]: updated }))
+          }
+          activeRole={activeRole}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="side-nav-expanded">
@@ -112,85 +219,110 @@ const MainSidebarPanel = ({ activeFilter, onFilterChange }) => {
             onClick={() => toggleInbox('support')}
           >
             <div className="nav-content">
-              <img src={inboxIcon} alt="" width="16" height="16" className="item-icon" />
+              <MailIcon />
               <span>Support</span>
             </div>
-            <img 
-              src={sChevronDown} 
-              alt="" 
-              className={`chevron-icon ${expandedInboxes.support ? 'up' : ''}`} 
-            />
+            <div className="accordion-meta">
+              <span className="inbox-sum">{inboxSum('Support')}</span>
+              <img
+                src={sChevronDown}
+                alt=""
+                className={`chevron-icon ${expandedInboxes.support ? 'up' : ''}`}
+              />
+            </div>
           </div>
 
-          {expandedInboxes.support && renderNestedItems('Support')}
+          <NestedGroup expanded={expandedInboxes.support}>
+            {renderNestedItems('Support')}
+          </NestedGroup>
 
           <div 
             className={`nav-item accordion-trigger ${expandedInboxes.finance ? 'expanded' : ''}`}
             onClick={() => toggleInbox('finance')}
           >
             <div className="nav-content">
-              <img src={inboxIcon} alt="" width="16" height="16" className="item-icon" />
+              <MailIcon />
               <span>Finance</span>
             </div>
-            <img 
-              src={sChevronDown} 
-              alt="" 
-              className={`chevron-icon ${expandedInboxes.finance ? 'up' : ''}`} 
-            />
+            <div className="accordion-meta">
+              <span className="inbox-sum">{inboxSum('Finance')}</span>
+              <img
+                src={sChevronDown}
+                alt=""
+                className={`chevron-icon ${expandedInboxes.finance ? 'up' : ''}`}
+              />
+            </div>
           </div>
 
-          {expandedInboxes.finance && renderNestedItems('Finance')}
+          <NestedGroup expanded={expandedInboxes.finance}>
+            {renderNestedItems('Finance')}
+          </NestedGroup>
 
           <div 
             className={`nav-item accordion-trigger ${expandedInboxes.shipping ? 'expanded' : ''}`}
             onClick={() => toggleInbox('shipping')}
           >
             <div className="nav-content">
-              <img src={inboxIcon} alt="" width="16" height="16" className="item-icon" />
+              <MailIcon />
               <span>Shipping</span>
             </div>
-            <img 
-              src={sChevronDown} 
-              alt="" 
-              className={`chevron-icon ${expandedInboxes.shipping ? 'up' : ''}`} 
-            />
+            <div className="accordion-meta">
+              <span className="inbox-sum">{inboxSum('Shipping')}</span>
+              <img
+                src={sChevronDown}
+                alt=""
+                className={`chevron-icon ${expandedInboxes.shipping ? 'up' : ''}`}
+              />
+            </div>
           </div>
 
-          {expandedInboxes.shipping && renderNestedItems('Shipping')}
+          <NestedGroup expanded={expandedInboxes.shipping}>
+            {renderNestedItems('Shipping')}
+          </NestedGroup>
 
           <div 
             className={`nav-item accordion-trigger ${expandedInboxes.refund ? 'expanded' : ''}`}
             onClick={() => toggleInbox('refund')}
           >
             <div className="nav-content">
-              <img src={inboxIcon} alt="" width="16" height="16" className="item-icon" />
+              <MailIcon />
               <span>Refund</span>
             </div>
-            <img 
-              src={sChevronDown} 
-              alt="" 
-              className={`chevron-icon ${expandedInboxes.refund ? 'up' : ''}`} 
-            />
+            <div className="accordion-meta">
+              <span className="inbox-sum">{inboxSum('Refund')}</span>
+              <img
+                src={sChevronDown}
+                alt=""
+                className={`chevron-icon ${expandedInboxes.refund ? 'up' : ''}`}
+              />
+            </div>
           </div>
 
-          {expandedInboxes.refund && renderNestedItems('Refund')}
+          <NestedGroup expanded={expandedInboxes.refund}>
+            {renderNestedItems('Refund')}
+          </NestedGroup>
 
           <div 
             className={`nav-item accordion-trigger ${expandedInboxes.itSupport ? 'expanded' : ''}`}
             onClick={() => toggleInbox('itSupport')}
           >
             <div className="nav-content">
-              <img src={inboxIcon} alt="" width="16" height="16" className="item-icon" />
+              <MailIcon />
               <span>IT Support</span>
             </div>
-            <img 
-              src={sChevronDown} 
-              alt="" 
-              className={`chevron-icon ${expandedInboxes.itSupport ? 'up' : ''}`} 
-            />
+            <div className="accordion-meta">
+              <span className="inbox-sum">{inboxSum('IT Support')}</span>
+              <img
+                src={sChevronDown}
+                alt=""
+                className={`chevron-icon ${expandedInboxes.itSupport ? 'up' : ''}`}
+              />
+            </div>
           </div>
 
-          {expandedInboxes.itSupport && renderNestedItems('IT Support')}
+          <NestedGroup expanded={expandedInboxes.itSupport}>
+            {renderNestedItems('IT Support')}
+          </NestedGroup>
         </div>
 
         <div className="section-title margin-top">More</div>
