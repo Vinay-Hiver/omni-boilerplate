@@ -1,67 +1,65 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import MiniSidebar from '../components/MiniSidebar';
+import { ADMIN_TOP_ITEM, ADMIN_SECTIONS } from './admin/adminData';
+import { ADMIN_PAGES } from './admin/AdminPages';
 import './SettingsPage.css';
 
-// Icons
-import editIcon from '../assets/icons/new-conversation.svg'; 
-import inboxIcon from '../assets/icons/inbox-icon.svg';
-import bellIcon from '../assets/icons/notification.svg';
+// id -> label lookup for the browser tab title.
+const ADMIN_LABELS = [ADMIN_TOP_ITEM, ...ADMIN_SECTIONS.flatMap((s) => s.items)]
+  .reduce((map, item) => ({ ...map, [item.id]: item.label }), {});
 
 const SettingsPage = () => {
   const [showProfileModal, setShowProfileModal] = useState(false);
-  const [isDirty, setIsDirty] = useState(false);
+  const [selected, setSelected] = useState('shared-inbox');
+
+  useEffect(() => {
+    document.title = `AI Prototype - ${ADMIN_LABELS[selected] || 'Settings'}`;
+  }, [selected]);
+
+  const renderItem = (item) => (
+    <button
+      key={item.id}
+      type="button"
+      className={`admin-item ${selected === item.id ? 'active' : ''}`}
+      onClick={() => setSelected(item.id)}
+    >
+      <span
+        className="admin-item-icon"
+        style={{ '--admin-icon': `url(${item.icon})` }}
+        aria-hidden="true"
+      />
+      <span className="admin-item-label">{item.label}</span>
+    </button>
+  );
 
   return (
     <div className="settings-page-root">
-      <MiniSidebar 
-        showProfileModal={showProfileModal} 
-        setShowProfileModal={setShowProfileModal} 
+      <MiniSidebar
+        showProfileModal={showProfileModal}
+        setShowProfileModal={setShowProfileModal}
       />
-      
-      <div className="settings-layout">
-        <aside className="settings-subnav">
-          <div className="subnav-header">
-            <h2>My Settings</h2>
-          </div>
-          <div className="subnav-items">
-            <div className="subnav-item active">
-               <img src={editIcon} alt="" width="16" height="16" />
-               <span>Compose Settings</span>
-            </div>
-            <div className="subnav-item">
-               <img src={inboxIcon} alt="" width="16" height="16" />
-               <span>Personal Inbox</span>
-            </div>
-            <div className="subnav-item">
-               <img src={bellIcon} alt="" width="16" height="16" />
-               <span>Notifications Settings</span>
-            </div>
-          </div>
-        </aside>
 
-        <div className="settings-content-wrapper">
-          <main className="settings-main-content">
-            <header className="content-header">
-              <h1>Compose settings</h1>
-            </header>
-
-            <section className="settings-section">
-              <div className="section-header">
-                <h3 className="section-title">Undo Send</h3>
-                <p className="section-desc">Undo email sending within your preferred timeframe after pressing Send.</p>
-              </div>
-              
-              <div className="select-box">
-                <span>Send immediately (Undo)</span>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
-              </div>
-            </section>
-          </main>
-          
-          <footer className="settings-footer">
-            <button className="btn-save" disabled={!isDirty}>Save</button>
-          </footer>
+      <aside className="admin-panel">
+        <div className="admin-panel-header">
+          <h2>Admin Panel</h2>
         </div>
+
+        <nav className="admin-panel-nav">
+          {renderItem(ADMIN_TOP_ITEM)}
+
+          {ADMIN_SECTIONS.map((section) => (
+            <div className="admin-section" key={section.title}>
+              <div className="admin-section-title">{section.title}</div>
+              <div className="admin-section-items">
+                {section.items.map(renderItem)}
+              </div>
+            </div>
+          ))}
+        </nav>
+      </aside>
+
+      <div className="ap-root">
+        {ADMIN_PAGES[selected] || null}
       </div>
     </div>
   );

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, useLocation } from 'react-router-dom';
 import './App.css';
 import Sidebar from './Sidebar';
 import ConversationList from './components/ConversationList';
@@ -1079,6 +1079,15 @@ function App() {
     }
     return dummyCacheRef.current[key];
   }, [activeFilter.inbox, activeFilter.type]);
+
+  const location = useLocation();
+  React.useEffect(() => {
+    // Each route/page sets its own title (e.g. SettingsPage). Only own the
+    // mailbox title here so this always-mounted component doesn't clobber it.
+    if (location.pathname === '/') {
+      document.title = 'AI Prototype - Conversations';
+    }
+  }, [location.pathname]);
 
   React.useEffect(() => {
     if (filteredConversations.length > 0) {
