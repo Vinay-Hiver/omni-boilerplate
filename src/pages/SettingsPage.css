@@ -6,178 +6,112 @@
   background-color: var(--slateSurfaceWhite);
 }
 
-.settings-layout {
-  display: flex;
-  flex: 1;
-  overflow: hidden;
-}
-
-.settings-subnav {
+/* Admin Panel — 240px column (Figma node 3001:1869) */
+.admin-panel {
   width: 240px;
-  border-right: 1px solid var(--slateBorderLight);
-  background-color: var(--slateSurfaceSubtle);
-  display: flex;
-  flex-direction: column;
-}
-
-.subnav-header {
-  height: 56px;
-  padding: 0 16px;
-  display: flex;
-  align-items: center;
-}
-
-.subnav-header h2 {
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--slateTextBody);
-}
-
-.subnav-items {
-  padding: 8px;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.subnav-item {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 8px 12px;
-  border-radius: 6px;
-  cursor: pointer;
-  color: var(--slateTextBody);
-  transition: background-color 0.2s;
-  font-size: 14px; /* Set to 14px */
-}
-
-.subnav-item:hover {
-  background-color: var(--slateSurfaceSubtle100-hover);
-}
-
-.subnav-item.active {
-  background-color: var(--primaryBorderSubtle);
-  color: var(--primaryTextDefault);
-  font-family: 'Hanken Grotesk', sans-serif;
-  font-weight: 500; /* Hanken Grotesk Medium */
-}
-
-.subnav-item img {
-  opacity: 0.7;
-}
-
-.subnav-item.active img {
-  opacity: 1;
-}
-
-.settings-content-wrapper {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  overflow: hidden;
-}
-
-.settings-main-content {
-  flex: 1;
-  padding: 40px 60px;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 32px; /* Updated from 24px to 32px */
-}
-
-.content-header {
-  border-bottom: none;
-  padding-bottom: 0px; /* Removed bottom padding */
-}
-
-.content-header h1 {
-  font-size: 24px;
-  font-weight: 600;
-  color: var(--slateTextBody);
-  margin-bottom: 0px; /* Removed bottom margin */
-}
-
-.content-subtitle {
-  font-size: 14px;
-  color: var(--slateTextSubtle);
-}
-
-.settings-section {
-  display: flex;
-  flex-direction: column;
-  gap: 16px; /* Spacing between header and content */
-}
-
-.section-header {
-  display: flex;
-  flex-direction: column;
-  gap: 4px; /* Spacing between title and desc */
-}
-
-.settings-main-content .section-title {
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--slateTextBody);
-  padding: 0;
-}
-
-.section-desc {
-  font-size: 14px;
-  color: var(--slateTextSubtle);
-  margin-bottom: 0;
-}
-
-.select-box {
-  width: 100%;
-  max-width: 400px;
-  height: 40px;
+  min-width: 240px;
+  height: 100%;
+  box-sizing: border-box;
   padding: 0 12px;
-  border: 1px solid var(--slateBorderLight);
-  border-radius: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background-color: var(--slateSurfaceSubtle);
+  border-right: 1px solid var(--slateBorderLight);
+  overflow-y: auto;
+}
+
+.admin-panel-header {
+  padding: 8px 8px 12px;
+}
+
+.admin-panel-header h2 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 24px;
+  color: var(--slateTextBody);
+}
+
+.admin-panel-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.admin-section {
+  display: flex;
+  flex-direction: column;
+}
+
+.admin-section-title {
+  height: 32px;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  color: var(--slateTextBody);
-  font-size: 14px;
-}
-
-.settings-divider {
-  height: 1px;
-  background-color: var(--slateBorderLight);
-  width: 100%;
-}
-
-.settings-footer {
-  width: 100%;
-  padding: 16px 24px;
-  display: flex;
-  justify-content: flex-end;
-  border-top: 1px solid var(--slateBorderLight);
-  background: var(--slateSurfaceWhite);
-  flex-shrink: 0;
-}
-
-.btn-save {
-  padding: 8px 16px;
-  background-color: var(--primarySurfaceDefault);
-  color: var(--slateSurfaceWhite);
-  border: none;
-  border-radius: 6px;
+  padding: 0 12px;
+  font-size: 13px;
   font-weight: 500;
+  line-height: 18px;
+  color: var(--slateTextSubtle);
+}
+
+.admin-section-items {
+  display: flex;
+  flex-direction: column;
+  padding: 0 4px;
+}
+
+.admin-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  height: 32px;
+  padding: 0 8px;
+  box-sizing: border-box;
+  border: 0;
+  border-radius: 8px;
+  background-color: transparent;
   cursor: pointer;
+  text-align: left;
+  font-family: inherit;
   font-size: 14px;
-  font-family: 'Hanken Grotesk', sans-serif;
+  font-weight: 400;
+  line-height: 20px;
+  color: var(--slateTextBody);
+  transition: background-color 0.15s ease;
 }
 
-.btn-save:hover {
-  background-color: var(--primarySurfaceHover);
+.admin-item:hover {
+  background-color: var(--slateSurfaceSubtle200, #eef2f6);
 }
 
-.btn-save:disabled {
-  background-color: var(--slateSurfaceSubtle100-hover);
-  color: var(--slateSurfaceDefault);
-  cursor: not-allowed;
-  border: 1px solid var(--slateBorderLight);
+.admin-item.active {
+  background-color: var(--primarySurfaceSubtle);
+  color: var(--primarySurfaceDefault);
+  font-weight: 500;
+}
+
+/* Icon is masked so it takes the item's current text color:
+   slate when inactive, primary blue when active. */
+.admin-item-icon {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  background-color: currentColor;
+  -webkit-mask: var(--admin-icon) center / contain no-repeat;
+  mask: var(--admin-icon) center / contain no-repeat;
+}
+
+.admin-item-label {
+  flex: 1 0 0;
+  min-width: 0;
+  word-break: break-word;
+}
+
+/* Rest of the page — empty white canvas for now */
+.settings-content-empty {
+  flex: 1;
+  height: 100%;
+  background-color: var(--slateSurfaceWhite, #ffffff);
 }
