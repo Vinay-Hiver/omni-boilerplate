@@ -13,7 +13,7 @@ const ProfileModal = ({ onClose }) => {
   const navigate = useNavigate();
 
   const handleSettingsClick = () => {
-    navigate('/settings');
+    navigate('/admin-panel');
     onClose();
   };
   return (

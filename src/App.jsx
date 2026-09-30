@@ -1151,7 +1151,7 @@ function App() {
             )}
           </>
         } />
-        <Route path="/settings" element={
+        <Route path="/admin-panel" element={
           <SettingsPage 
             signatures={signatures}
             setSignatures={setSignatures}
