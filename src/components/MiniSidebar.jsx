@@ -54,8 +54,8 @@ const MiniSidebar = ({ showProfileModal, setShowProfileModal }) => {
             className={`mini-item ${isActive('/admin-panel') ? 'active' : ''}`}
             onClick={() => navigate('/admin-panel')}
           >
-            <img src={settingsIcon} alt="Settings" width="16" height="16" />
-            <span className="tooltip">Settings</span>
+            <img src={settingsIcon} alt="Admin Panel" width="16" height="16" />
+            <span className="tooltip">Admin Panel</span>
           </div>
           
         </div>
