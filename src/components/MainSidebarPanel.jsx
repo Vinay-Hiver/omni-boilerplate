@@ -2,6 +2,7 @@ import React from 'react';
 import AllViewsPanel from './AllViewsPanel';
 import { ViewTypeIcon, TeamFavRowIcon } from './viewIcons';
 import { INITIAL_VIEWS_BY_INBOX, MAX_FAVOURITES } from '../data/dummyViews';
+import { channelViewCount, channelInboxTotal, isCountedView } from '../data/channelChats';
 
 // Icons
 import allMailIcon from '../assets/icons/all-mail.svg';
@@ -10,8 +11,69 @@ import draftIcon from '../assets/icons/draft.svg';
 import newConversationIcon from '../assets/icons/new-conversation.svg';
 import sentIcon from '../assets/icons/sent.svg';
 import tagsIcon from '../assets/icons/tags.svg';
+import searchIcon from '../assets/icons/search-icon.svg';
+import plusIcon from '../assets/icons/plus-icon.svg';
+import chevronDownSmall from '../assets/icons/s-chevron-down.svg';
 
 import sChevronDown from '../assets/icons/Read/side-bar-chevron.svg';
+
+// Channel icons (HOT Design System) — one per Shared Inbox channel.
+import mailChannelIcon from '../assets/icons/channels/mail.svg';
+import slackChannelIcon from '../assets/icons/channels/slack.svg';
+import whatsappChannelIcon from '../icons/whatsapp.svg';
+import chatSidebarIcon from '../icons/chat-sidebar-icon.svg';
+import botIconSvg from '../icons/bot-icon.svg';
+
+const CHANNEL_ICONS = {
+  email: mailChannelIcon,
+  chat: chatSidebarIcon,
+  slack: slackChannelIcon,
+  whatsapp: whatsappChannelIcon,
+};
+
+// Fixed submenus for channel inboxes (Chat differs from Slack/WhatsApp).
+const BotIcon = () => (
+  <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="3" y="5" width="10" height="8" rx="2" />
+    <path d="M8 5V3M5.5 9h.01M10.5 9h.01M6 12h4" />
+    <path d="M1.5 8.5v-1M14.5 8.5v-1" />
+  </svg>
+);
+
+const CHANNEL_SUBMENUS = {
+  chat: [
+    { type: 'Unassigned', icon: 'unassigned', count: 0 },
+    { type: 'Assigned to Bot', icon: 'bot', count: 0 },
+    { type: 'Mine', icon: 'mine', count: 0 },
+    { type: 'All Assigned', icon: 'team', count: 0 },
+    { type: 'Tags', icon: 'tags' },
+    { type: 'Closed', icon: 'closed' },
+  ],
+  slack: [
+    { type: 'Unassigned', icon: 'unassigned', count: 0 },
+    { type: 'Mine', icon: 'mine', count: 0 },
+    { type: 'All Assigned', icon: 'team', count: 0 },
+    { type: 'Tags', icon: 'tags' },
+    { type: 'Pending', icon: 'pending' },
+    { type: 'Closed', icon: 'closed' },
+  ],
+};
+CHANNEL_SUBMENUS.whatsapp = CHANNEL_SUBMENUS.slack;
+
+// Masked so the glyph takes the nav item's text color (slate → primary active).
+const ChannelIcon = ({ channel }) => {
+  // WhatsApp uses its own icon rendered as-is (not masked/recolored).
+  if (channel === 'whatsapp') {
+    return <img src={whatsappChannelIcon} alt="" width="16" height="16" className="item-icon" />;
+  }
+  return (
+    <span
+      className="item-icon channel-icon"
+      style={{ '--channel-icon': `url(${CHANNEL_ICONS[channel] || mailChannelIcon})` }}
+      aria-hidden="true"
+    />
+  );
+};
 
 // Untitled UI "mail-01" glyph, used for every Shared Inbox header.
 const MailIcon = () => (
@@ -72,14 +134,15 @@ const NestedGroup = ({ expanded, children }) => {
   );
 };
 
-const MainSidebarPanel = ({ activeFilter, onFilterChange, activeRole }) => {
-  const [expandedInboxes, setExpandedInboxes] = React.useState({
-    support: true,
-    finance: false,
-    shipping: false,
-    refund: false,
-    itSupport: false
-  });
+// Ordered list of Shared Inboxes + a stable slug for each (used as the
+// expanded/collapsed key). Order follows the data in dummyViews.js.
+const slugifyInbox = (name) => name.toLowerCase().replace(/\s+/g, '-');
+const INBOX_NAMES = Object.keys(INITIAL_VIEWS_BY_INBOX);
+
+const MainSidebarPanel = ({ activeFilter, onFilterChange, activeRole, onOpenSearch }) => {
+  const [expandedInboxes, setExpandedInboxes] = React.useState(
+    INBOX_NAMES.reduce((acc, name, i) => ({ ...acc, [slugifyInbox(name)]: i === 0 }), {})
+  );
 
   const [allViewsInbox, setAllViewsInbox] = React.useState(null);
 
@@ -99,11 +162,16 @@ const MainSidebarPanel = ({ activeFilter, onFilterChange, activeRole }) => {
   // so they persist across opening/closing All Views and drive the home nav.
   const [viewsByInbox, setViewsByInbox] = React.useState(INITIAL_VIEWS_BY_INBOX);
 
-  const toggleInbox = (inbox) => {
+  const toggleInbox = (name) => {
+    const key = slugifyInbox(name);
+    const willExpand = !expandedInboxes[key];
     setExpandedInboxes(prev => ({
       ...prev,
-      [inbox]: !prev[inbox]
+      [key]: willExpand
     }));
+    if (willExpand) {
+      onFilterChange({ inbox: name, type: 'Unassigned' });
+    }
   };
 
   // Sum of the counts of the views shown under an inbox (its home-nav
@@ -111,6 +179,8 @@ const MainSidebarPanel = ({ activeFilter, onFilterChange, activeRole }) => {
   const inboxSum = (inboxName) => {
     const data = viewsByInbox[inboxName];
     if (!data) return 0;
+    // Channel inboxes: total number of conversations across all views.
+    if (data.channel && data.channel !== 'email') return channelInboxTotal(inboxName);
     const sidebarOrder = data.sidebarOrder?.[activeRole] || data.favouriteIds?.[activeRole] || [];
     const viewsById = {};
     data.views.forEach((v) => { viewsById[v.id] = v; });
@@ -154,7 +224,7 @@ const MainSidebarPanel = ({ activeFilter, onFilterChange, activeRole }) => {
           </div>
         ))}
 
-      <div className="nav-item">
+      <div className="nav-item" style={{ cursor: 'pointer' }} onClick={(e) => e.stopPropagation()}>
         <div className="nav-content">
           <img src={tagsIcon} alt="" width="16" height="16" className="item-icon" />
           <span>Tags</span>
@@ -173,6 +243,42 @@ const MainSidebarPanel = ({ activeFilter, onFilterChange, activeRole }) => {
     </div>
   );
 };
+
+  // Fixed submenu for channel inboxes (Chat vs Slack/WhatsApp).
+  const submenuIcon = (icon) => {
+    if (icon === 'tags') return <img src={tagsIcon} alt="" width="16" height="16" className="item-icon" />;
+    if (icon === 'bot') return <img src={botIconSvg} alt="" width="16" height="16" className="item-icon" />;
+    return <span className="item-icon"><ViewTypeIcon icon={icon} /></span>;
+  };
+
+  const renderChannelSubmenu = (inboxName, channel) => {
+    const items = CHANNEL_SUBMENUS[channel] || [];
+    return (
+      <div className="nav-group-nested">
+        {items.map((item) => (
+          <div
+            key={item.type}
+            className={`nav-item ${activeFilter.inbox === inboxName && activeFilter.type === item.type ? 'active' : ''}`}
+            onClick={(e) => {
+              if (item.type === 'Tags') {
+                e.stopPropagation();
+                return;
+              }
+              onFilterChange({ inbox: inboxName, type: item.type });
+            }}
+          >
+            <div className="nav-content">
+              {submenuIcon(item.icon)}
+              <span>{item.type}</span>
+            </div>
+            {isCountedView(item.type) && (
+              <div className="nav-item-meta"><span className="count">{channelViewCount(inboxName, item.type)}</span></div>
+            )}
+          </div>
+        ))}
+      </div>
+    );
+  };
 
   if (allViewsInbox) {
     return (
@@ -198,7 +304,17 @@ const MainSidebarPanel = ({ activeFilter, onFilterChange, activeRole }) => {
         <div className="header-row">
           <h1>Conversations</h1>
           <div className="header-actions">
-            <img src={newConversationIcon} alt="New" width="16" height="16" />
+            <button type="button" className="header-icon-btn" title="Search" onClick={onOpenSearch}>
+              <img src={searchIcon} alt="" width="16" height="16" />
+            </button>
+            <div className="new-convo-split-btn">
+              <button type="button" className="split-btn-main" title="New conversation">
+                <img src={plusIcon} alt="" width="16" height="16" />
+              </button>
+              <button type="button" className="split-btn-chevron" title="More options">
+                <img src={chevronDownSmall} alt="" width="14" height="14" />
+              </button>
+            </div>
           </div>
         </div>
         <div className="search-container">
@@ -213,116 +329,36 @@ const MainSidebarPanel = ({ activeFilter, onFilterChange, activeRole }) => {
         <div className="section-title">Shared Inbox</div>
         
         <div className="nav-group">
+          {INBOX_NAMES.map((name) => {
+            const key = slugifyInbox(name);
+            return (
+              <React.Fragment key={key}>
+                <div
+                  className={`nav-item accordion-trigger ${expandedInboxes[key] ? 'expanded' : ''}`}
+                  onClick={() => toggleInbox(name)}
+                >
+                  <div className="nav-content">
+                    <ChannelIcon channel={viewsByInbox[name]?.channel} />
+                    <span>{name}</span>
+                  </div>
+                  <div className="accordion-meta">
+                    <span className="inbox-sum">{inboxSum(name)}</span>
+                    <img
+                      src={sChevronDown}
+                      alt=""
+                      className={`chevron-icon ${expandedInboxes[key] ? 'up' : ''}`}
+                    />
+                  </div>
+                </div>
 
-          <div 
-            className={`nav-item accordion-trigger ${expandedInboxes.support ? 'expanded' : ''}`}
-            onClick={() => toggleInbox('support')}
-          >
-            <div className="nav-content">
-              <MailIcon />
-              <span>Support</span>
-            </div>
-            <div className="accordion-meta">
-              <span className="inbox-sum">{inboxSum('Support')}</span>
-              <img
-                src={sChevronDown}
-                alt=""
-                className={`chevron-icon ${expandedInboxes.support ? 'up' : ''}`}
-              />
-            </div>
-          </div>
-
-          <NestedGroup expanded={expandedInboxes.support}>
-            {renderNestedItems('Support')}
-          </NestedGroup>
-
-          <div 
-            className={`nav-item accordion-trigger ${expandedInboxes.finance ? 'expanded' : ''}`}
-            onClick={() => toggleInbox('finance')}
-          >
-            <div className="nav-content">
-              <MailIcon />
-              <span>Finance</span>
-            </div>
-            <div className="accordion-meta">
-              <span className="inbox-sum">{inboxSum('Finance')}</span>
-              <img
-                src={sChevronDown}
-                alt=""
-                className={`chevron-icon ${expandedInboxes.finance ? 'up' : ''}`}
-              />
-            </div>
-          </div>
-
-          <NestedGroup expanded={expandedInboxes.finance}>
-            {renderNestedItems('Finance')}
-          </NestedGroup>
-
-          <div 
-            className={`nav-item accordion-trigger ${expandedInboxes.shipping ? 'expanded' : ''}`}
-            onClick={() => toggleInbox('shipping')}
-          >
-            <div className="nav-content">
-              <MailIcon />
-              <span>Shipping</span>
-            </div>
-            <div className="accordion-meta">
-              <span className="inbox-sum">{inboxSum('Shipping')}</span>
-              <img
-                src={sChevronDown}
-                alt=""
-                className={`chevron-icon ${expandedInboxes.shipping ? 'up' : ''}`}
-              />
-            </div>
-          </div>
-
-          <NestedGroup expanded={expandedInboxes.shipping}>
-            {renderNestedItems('Shipping')}
-          </NestedGroup>
-
-          <div 
-            className={`nav-item accordion-trigger ${expandedInboxes.refund ? 'expanded' : ''}`}
-            onClick={() => toggleInbox('refund')}
-          >
-            <div className="nav-content">
-              <MailIcon />
-              <span>Refund</span>
-            </div>
-            <div className="accordion-meta">
-              <span className="inbox-sum">{inboxSum('Refund')}</span>
-              <img
-                src={sChevronDown}
-                alt=""
-                className={`chevron-icon ${expandedInboxes.refund ? 'up' : ''}`}
-              />
-            </div>
-          </div>
-
-          <NestedGroup expanded={expandedInboxes.refund}>
-            {renderNestedItems('Refund')}
-          </NestedGroup>
-
-          <div 
-            className={`nav-item accordion-trigger ${expandedInboxes.itSupport ? 'expanded' : ''}`}
-            onClick={() => toggleInbox('itSupport')}
-          >
-            <div className="nav-content">
-              <MailIcon />
-              <span>IT Support</span>
-            </div>
-            <div className="accordion-meta">
-              <span className="inbox-sum">{inboxSum('IT Support')}</span>
-              <img
-                src={sChevronDown}
-                alt=""
-                className={`chevron-icon ${expandedInboxes.itSupport ? 'up' : ''}`}
-              />
-            </div>
-          </div>
-
-          <NestedGroup expanded={expandedInboxes.itSupport}>
-            {renderNestedItems('IT Support')}
-          </NestedGroup>
+                <NestedGroup expanded={expandedInboxes[key]}>
+                  {(viewsByInbox[name]?.channel || 'email') === 'email'
+                    ? renderNestedItems(name)
+                    : renderChannelSubmenu(name, viewsByInbox[name].channel)}
+                </NestedGroup>
+              </React.Fragment>
+            );
+          })}
         </div>
 
         <div className="section-title margin-top">More</div>

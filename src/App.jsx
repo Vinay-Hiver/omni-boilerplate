@@ -5,6 +5,8 @@ import Sidebar from './Sidebar';
 import ConversationList from './components/ConversationList';
 import ConversationDetail from './components/ConversationDetail';
 import RightPanel from './components/RightPanel';
+import ChannelChatView from './components/ChannelChatView';
+import { CHANNEL_BY_INBOX } from './data/channelChats';
 import SettingsPage from './pages/SettingsPage';
 import { useState } from 'react';
 
@@ -996,6 +998,14 @@ const DUMMY_SENDERS = [
   { sender: 'Tom Becker', initial: 'T', avatarColor: 'var(--pastelLightBlueBorderDefault)', email: 'tom.becker@fernco.com' },
   { sender: 'Hana Sato', initial: 'H', avatarColor: 'var(--pastelOrangeSurfaceDefault)', email: 'hana.sato@orbital.io' },
   { sender: 'Liam Walsh', initial: 'L', avatarColor: 'var(--pastelRedBorderDefault)', email: 'liam.walsh@acme.com' },
+  { sender: 'Ava Patel', initial: 'A', avatarColor: 'var(--pastelVioletBorderDefault)', email: 'ava.patel@horizon.org' },
+  { sender: 'Noah Khan', initial: 'N', avatarColor: 'var(--pastelLightBlueBorderDefault)', email: 'noah.khan@apex.com' },
+  { sender: 'Arlene McCoy', initial: 'A', avatarColor: 'var(--pastelOrangeSurfaceDefault)', email: 'arlene.mccoy@vanguard.com' },
+  { sender: 'Guy Hawkins', initial: 'G', avatarColor: 'var(--pastelRedBorderDefault)', email: 'guy.hawkins@nexus.io' },
+  { sender: 'Courtney Henry', initial: 'C', avatarColor: 'var(--pastelVioletBorderDefault)', email: 'courtney.henry@starlight.com' },
+  { sender: 'Darlene Robertson', initial: 'D', avatarColor: 'var(--pastelLightBlueBorderDefault)', email: 'darlene.robertson@pulse.com' },
+  { sender: 'Eleanor Pena', initial: 'E', avatarColor: 'var(--pastelOrangeSurfaceDefault)', email: 'eleanor.pena@summit.io' },
+  { sender: 'Floyd Miles', initial: 'F', avatarColor: 'var(--pastelRedBorderDefault)', email: 'floyd.miles@beacon.com' },
 ];
 
 const DUMMY_SUBJECTS = [
@@ -1059,8 +1069,8 @@ const generateDummyConversations = (inbox, type) => {
 };
 
 function App() {
-  const [selectedId, setSelectedId] = useState(1);
-  const [activeFilter, setActiveFilter] = useState({ inbox: 'Support', type: 'Mine' });
+  const [selectedId, setSelectedId] = useState('chat-01-unassigned-0');
+  const [activeFilter, setActiveFilter] = useState({ inbox: 'Chat 01', type: 'Unassigned' });
 
   // Prototype role — All Views pins Team Favourites as Admin. No toggle UI.
   const activeRole = 'Admin';
@@ -1113,19 +1123,32 @@ function App() {
               onFilterChange={setActiveFilter}
               activeRole={activeRole}
             />
-            <ConversationList 
-              conversations={filteredConversations} 
-              selectedId={selectedId} 
-              onSelect={setSelectedId} 
-              activeFilter={activeFilter}
-            />
-            <ConversationDetail 
-              conversation={selectedConversation} 
-              signatures={signatures}
-              setSignatures={setSignatures}
-              defaultSignatureId={defaultSignatureId}
-            />
-            <RightPanel />
+            {CHANNEL_BY_INBOX[activeFilter.inbox] ? (
+              <ChannelChatView key={`${activeFilter.inbox}|${activeFilter.type}`} inboxName={activeFilter.inbox} viewType={activeFilter.type} />
+            ) : (
+              <>
+                <ConversationList
+                  conversations={filteredConversations}
+                  selectedId={selectedId}
+                  onSelect={setSelectedId}
+                  activeFilter={activeFilter}
+                />
+                <ConversationDetail
+                  conversation={selectedConversation}
+                  signatures={signatures}
+                  setSignatures={setSignatures}
+                  defaultSignatureId={defaultSignatureId}
+                />
+                <RightPanel
+                  inboxName={`${activeFilter.inbox} Inbox`}
+                  contact={{
+                    name: selectedConversation?.sender,
+                    email: selectedConversation?.messages?.[0]?.email,
+                    phone: selectedConversation?.phone || '+1 (555) 012-3456',
+                  }}
+                />
+              </>
+            )}
           </>
         } />
         <Route path="/settings" element={

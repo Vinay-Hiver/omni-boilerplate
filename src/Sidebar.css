@@ -193,9 +193,57 @@
 
 .header-actions {
   color: var(--slateIconsSubtle);
-  cursor: pointer;
   display: flex;
   align-items: center;
+  gap: 8px;
+}
+
+.header-icon-btn {
+  width: 24px;
+  height: 24px;
+  padding: 4px;
+  border: none;
+  background: transparent;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.header-icon-btn:hover {
+  background-color: var(--slateSurfaceSubtle100-hover);
+}
+
+.new-convo-split-btn {
+  display: flex;
+  align-items: center;
+  gap: 1px;
+  filter: drop-shadow(0px 4px 2px rgba(0, 0, 0, 0.08));
+}
+
+.new-convo-split-btn button {
+  border: none;
+  background: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  height: 28px;
+}
+
+.split-btn-main {
+  padding: 6px 8px;
+  border-radius: 8px 0 0 8px;
+}
+
+.split-btn-chevron {
+  padding: 6px 2px;
+  border-radius: 0 8px 8px 0;
+}
+
+.new-convo-split-btn button:hover {
+  background-color: var(--slateSurfaceSubtle100-hover);
 }
 
 .search-container {
@@ -303,6 +351,17 @@
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+/* Channel icon (mail/chat/slack/whatsapp) — masked so it follows the nav
+   item's current text color, incl. the primary color on the active row. */
+.channel-icon {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  background-color: currentColor;
+  -webkit-mask: var(--channel-icon) center / contain no-repeat;
+  mask: var(--channel-icon) center / contain no-repeat;
 }
 
 .accordion-meta {

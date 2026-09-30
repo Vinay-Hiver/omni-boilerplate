@@ -47,6 +47,22 @@
 
   /* ── Primary — Brand blue, actions & highlights ───── */
   --primarySurfaceDefault: #276cf0;
+  --primarySurfaceMildDark: #0f53d2; /* Button primary hover (HOT DS) */
+  --primarySurfaceDark: #0c3e9d;     /* Button primary active (HOT DS) */
+  --errorBorderDefault: #e42525;     /* Button error / danger (HOT DS) */
+  --errorTextBody: #6d0d0e;          /* Input error helper text (HOT DS) */
+  --errorTextSoft: #dc2626;          /* Required asterisk (HOT DS) */
+  --slateSurfaceSubtle100: #f1f5f9;  /* Filled button bg, table header (HOT DS) */
+  --slateBorderDefault: #94a3b8;     /* Checkbox / input default border (HOT DS) */
+  --slateSurfaceSlate150: #edf1f6;   /* Slack channel chip bg (HOT DS) */
+  --slateSurfaceSubtle300: #cbd5e1;  /* Slack list chip border (HOT DS) */
+  /* Channel chat (WhatsApp-integration) tokens */
+  --body-medium-size: 16px;
+  --body-xsmall-size: 12px;
+  --body-xsmall-line-height: 18px;
+  --green-500: #2DBB6D;
+  --slate-100: #F1F5F9;
+  --slate-300: #CBD5E1;
   --primarySurfaceLighter: #7ea8f6;
   --primarySurfaceSubtle: #e6effd;
   --primaryBorderLighter: #a9c5f9;

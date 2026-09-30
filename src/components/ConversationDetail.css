@@ -27,6 +27,7 @@
   overflow-y: auto;
   display: flex;
   flex-direction: column;
+  background-color: #f8fafc; /* same as .messages-container */
 }
 
 .header-left {
