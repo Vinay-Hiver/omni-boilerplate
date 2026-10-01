@@ -8,6 +8,7 @@ import RightPanel from './components/RightPanel';
 import ChannelChatView from './components/ChannelChatView';
 import { CHANNEL_BY_INBOX } from './data/channelChats';
 import SettingsPage from './pages/SettingsPage';
+import MySettingsPage from './pages/MySettingsPage';
 import { useState } from 'react';
 
 const conversationsData = [
@@ -1152,13 +1153,14 @@ function App() {
           </>
         } />
         <Route path="/admin-panel" element={
-          <SettingsPage 
+          <SettingsPage
             signatures={signatures}
             setSignatures={setSignatures}
             defaultSignatureId={defaultSignatureId}
             setDefaultSignatureId={setDefaultSignatureId}
           />
         } />
+        <Route path="/my-settings" element={<MySettingsPage />} />
       </Routes>
     </div>
   );
