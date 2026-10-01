@@ -170,8 +170,19 @@ const MainSidebarPanel = ({ activeFilter, onFilterChange, activeRole, onOpenSear
       [key]: willExpand
     }));
     if (willExpand) {
-      onFilterChange({ inbox: name, type: 'Unassigned' });
+      onFilterChange({ inbox: name, type: firstSubsection(name) });
     }
+  };
+
+  // The first subsection shown under an inbox: 'Unassigned' for channel
+  // inboxes, or the first favourite view's name for email inboxes (e.g. Mine).
+  const firstSubsection = (name) => {
+    const data = viewsByInbox[name];
+    if (!data) return 'Mine';
+    if (data.channel && data.channel !== 'email') return 'Unassigned';
+    const order = data.sidebarOrder?.[activeRole] || data.favouriteIds?.[activeRole] || [];
+    const first = data.views.find((v) => v.id === order[0]);
+    return first ? first.name : 'Mine';
   };
 
   // Sum of the counts of the views shown under an inbox (its home-nav

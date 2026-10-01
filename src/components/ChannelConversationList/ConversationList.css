@@ -91,7 +91,7 @@
 .conversation-list__divider {
   height: 1px;
   margin: 0 8px;
-  background: var(--slateBorderLight);
+  background: var(--slateBorderMild);
 }
 
 .conversation-avatar {

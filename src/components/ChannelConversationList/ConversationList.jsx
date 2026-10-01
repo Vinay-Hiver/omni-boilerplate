@@ -50,7 +50,7 @@ export default function ConversationList({ channel, conversations = [], selected
               selected={conversation.id === selectedId}
               onSelect={onSelect}
             />
-            {index === 0 && <div className="conversation-list__divider" />}
+            {index < conversations.length - 1 && <div className="conversation-list__divider" />}
           </div>
         ))}
       </div>
